@@ -22,6 +22,9 @@ public class MatchingTest {
         same(c, "empty text", "", "a", List.of());
         same(c, "whole text", "abc", "abc", List.of(0));
 
+        c.equal("kmp prefix table", new int[]{0, 0, 1, 2, 3, 0, 1}, new KmpMatcher().prefixTable("ababaca"));
+        c.equal("kmp prefix table aaaa", new int[]{0, 1, 2, 3}, new KmpMatcher().prefixTable("aaaa"));
+
     }
 
     private static void same(Check c, String name, String text, String pattern, List<Integer> expected) {
