@@ -7,6 +7,7 @@ public class TestRunner {
         LcsTest.run(c);
         EditDistanceTest.run(c);
         MatchingTest.run(c);
+        KasaiTest.run(c);
         System.out.println("passed: " + c.passed() + ", failed: " + c.failed());
         if (c.failed() > 0) {
             System.exit(1);
