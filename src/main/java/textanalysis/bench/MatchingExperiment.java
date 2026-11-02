@@ -23,6 +23,10 @@ public class MatchingExperiment {
             String absent = absentPattern(gen, text);
             measure(rows, "present", text, present);
             measure(rows, "absent", text, absent);
+
+            String repetitive = "a".repeat(n);
+            String hard = "a".repeat(PATTERN_LENGTH - 1) + "b";
+            measure(rows, "repetitive", repetitive, hard);
         }
         return rows;
     }
