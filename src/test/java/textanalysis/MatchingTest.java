@@ -25,6 +25,10 @@ public class MatchingTest {
         c.equal("kmp prefix table", new int[]{0, 0, 1, 2, 3, 0, 1}, new KmpMatcher().prefixTable("ababaca"));
         c.equal("kmp prefix table aaaa", new int[]{0, 1, 2, 3}, new KmpMatcher().prefixTable("aaaa"));
 
+        RabinKarpMatcher weak = new RabinKarpMatcher(7);
+        String text = "abcdabcabcdabdabcabd";
+        c.equal("rk small mod", new NaiveMatcher().search(text, "abd"), weak.search(text, "abd"));
+        c.isTrue("rk small mod has collisions", weak.collisions() > 0);
     }
 
     private static void same(Check c, String name, String text, String pattern, List<Integer> expected) {
