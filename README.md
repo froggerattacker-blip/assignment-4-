@@ -179,3 +179,19 @@ Present pattern was found once in each text. No hash collisions happened with th
 ![kasai](plots/kasai_time.png)
 
 Raw data is in `results/*.csv`.
+
+## 7. Discussion
+
+- **DP.** Going from n=100 to n=1000 is 100x more cells, and time grows roughly 100x+ too, so it matches Θ(n²). The step 500 -> 1000 should be about 4x; LCS shows less, Edit Distance a bit more. At these sizes times are just a few ms, so JIT and memory allocation (a 1000x1000 int table is ~4 MB) add noticeable noise. The difference between LCS and Edit Distance at the same n is mostly noise, both do O(1) work per cell.
+- **Matching on random text.** Naive and KMP are almost identical. With 4 letters a mismatch usually comes on the 1st or 2nd character, so Naive makes only ~1.33n comparisons, far from its O(nm) worst case. KMP makes ~1.25n. Both are clearly linear in n.
+- **Rabin-Karp** makes almost no character comparisons, but it is about 2x slower here because every step has multiplication and two `%` operations. Theory says O(n+m) for it as well, the difference is the constant.
+- **Repetitive text** is where theory shows up: Naive does ~(n-m+1)·m ≈ 20n comparisons and is about 10x slower than KMP, which stays at ~2n. Rabin-Karp time doesn't change at all because the hash doesn't care about the text content.
+- **Kasai** comparisons are always just under 2n (1990, 9991, 19988), exactly the bound from the analysis, and time grows linearly.
+
+## 8. Conclusion
+
+- LCS and Edit Distance are simple and exact, but Θ(nm) time and memory makes them fine for short strings and expensive for long ones. Space can be cut to O(min(n, m)) if only the value is needed.
+- Naive matching is the fastest on random text with a short pattern since it has no preprocessing, but it degrades to O(nm) on repetitive input.
+- KMP costs O(m) extra memory and preprocessing, and in return it is linear in every case. It is the safest choice.
+- Rabin-Karp has the most expensive constant because of hashing, and its worst case depends on collisions. Its strength is that the rolling hash extends well to searching many patterns at once or 2D matching.
+- Kasai turns a suffix array into an LCP array in linear time with two extra arrays, which is cheap compared to building the suffix array itself.
