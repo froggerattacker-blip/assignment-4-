@@ -134,3 +134,48 @@ The benchmark also checks that the three matchers return the same list on every 
 - Timing: `System.nanoTime()`, 10 warm-up runs (not counted), then 5 timed runs, average reported in ms. Before the real measurement the whole benchmark is run once to warm up the JVM.
 - Input generation, suffix array construction, printing and CSV writing are outside the timed region.
 - Machine: Linux container, OpenJDK 21, `-Xms512m`. Numbers will differ on other machines, but the shape should be the same.
+
+## 6. Results
+
+### LCS and Edit Distance
+
+| Algorithm | n | avg ms | DP cells | result |
+|---|---|---|---|---|
+| LCS | 100 | 0.033 | 10 000 | 64 |
+| LCS | 500 | 3.046 | 250 000 | 326 |
+| LCS | 1000 | 4.585 | 1 000 000 | 648 |
+| Edit Distance | 100 | 0.046 | 10 000 | 55 |
+| Edit Distance | 500 | 1.271 | 250 000 | 267 |
+| Edit Distance | 1000 | 5.828 | 1 000 000 | 521 |
+
+![dp](plots/dp_time.png)
+
+### String matching (m = 20)
+
+| Case | n | Naive ms | KMP ms | RK ms | Naive cmp | KMP cmp | RK cmp |
+|---|---|---|---|---|---|---|---|
+| present | 10 000 | 0.058 | 0.059 | 0.142 | 13 433 | 12 544 | 20 |
+| present | 50 000 | 0.383 | 0.339 | 0.683 | 66 562 | 62 413 | 20 |
+| present | 100 000 | 0.684 | 0.759 | 1.446 | 133 426 | 125 092 | 20 |
+| absent | 10 000 | 0.048 | 0.059 | 0.176 | 13 376 | 12 550 | 0 |
+| absent | 50 000 | 0.336 | 0.343 | 0.682 | 66 627 | 62 432 | 0 |
+| absent | 100 000 | 0.609 | 0.610 | 1.438 | 133 476 | 123 508 | 0 |
+| repetitive | 10 000 | 0.516 | 0.048 | 0.132 | 199 620 | 20 018 | 0 |
+| repetitive | 50 000 | 2.420 | 0.242 | 0.699 | 999 620 | 100 018 | 0 |
+| repetitive | 100 000 | 4.773 | 0.486 | 1.371 | 1 999 620 | 200 018 | 0 |
+
+Present pattern was found once in each text. No hash collisions happened with the big modulus.
+
+![matching](plots/matching_time.png)
+
+### Kasai
+
+| n | avg ms | comparisons | max LCP |
+|---|---|---|---|
+| 1 000 | 0.128 | 1 990 | 11 |
+| 5 000 | 0.458 | 9 991 | 11 |
+| 10 000 | 0.919 | 19 988 | 14 |
+
+![kasai](plots/kasai_time.png)
+
+Raw data is in `results/*.csv`.
