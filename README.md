@@ -92,3 +92,45 @@ n, m are the lengths of the two strings (or text and pattern).
 Rabin-Karp: the expected bound assumes hash values behave randomly, so a false match happens with probability about 1/q per window. The worst case is a bad modulus or a text with many real matches (e.g. `aaaa` and `aa`), where almost every window is verified.
 
 These are theoretical bounds. Measured times below also depend on JIT, cache and memory allocation, so they don't map 1:1 to the formulas.
+
+## 4. Testing
+
+`TestRunner` runs everything with a tiny `Check` helper (no JUnit, so nothing to download). It exits with code 1 if something fails.
+
+- LCS: identical strings, completely different, empty first / second / both, classic `ABCBDAB` / `BDCABA` = 4, reconstruction `GTAB`.
+- Edit Distance: identical = 0, one empty, single substitution / insertion / deletion, `kitten -> sitting` = 3, `sunday -> saturday` = 3.
+- Matching: beginning, middle, end, multiple (overlapping) occurrences, absent, pattern longer than text, empty pattern, empty text, pattern equal to text. Every case is checked against the expected list for **all three** matchers, so they must agree. Also the KMP prefix table for `ababaca` and Rabin-Karp with modulus 7 (forced collisions).
+- Kasai: `banana` with manually checked SA `[5, 3, 1, 0, 4, 2]` and LCP `[0, 1, 3, 0, 0, 2]`, plus `mississippi`, a one-char string and `aaaa`.
+
+Check for `banana`:
+
+| i | sa[i] | suffix | lcp[i] |
+|---|---|---|---|
+| 0 | 5 | a | 0 |
+| 1 | 3 | ana | 1 |
+| 2 | 1 | anana | 3 |
+| 3 | 0 | banana | 0 |
+| 4 | 4 | na | 0 |
+| 5 | 2 | nana | 2 |
+
+Result:
+
+```
+passed: 58, failed: 0
+```
+
+The benchmark also checks that the three matchers return the same list on every workload and throws if not.
+
+## 5. Experimental setup
+
+- Alphabet: `{a, b, c, d}` for every random string. Seed `42` (`java.util.Random`).
+- LCS / Edit Distance: two random strings of length 100, 500, 1000 (both algorithms get the same pair).
+- Matching: random text of length 10 000, 50 000, 100 000, pattern length 20.
+  - present: pattern copied from the middle of the text,
+  - absent: random pattern, regenerated until it does not occur in the text,
+  - repetitive: text `a` × n with pattern `a` × 19 + `b`, the worst case for Naive.
+  The same text and pattern are used for Naive, KMP and Rabin-Karp.
+- Kasai: random strings of length 1 000, 5 000, 10 000. The suffix array is built before timing.
+- Timing: `System.nanoTime()`, 10 warm-up runs (not counted), then 5 timed runs, average reported in ms. Before the real measurement the whole benchmark is run once to warm up the JVM.
+- Input generation, suffix array construction, printing and CSV writing are outside the timed region.
+- Machine: Linux container, OpenJDK 21, `-Xms512m`. Numbers will differ on other machines, but the shape should be the same.
