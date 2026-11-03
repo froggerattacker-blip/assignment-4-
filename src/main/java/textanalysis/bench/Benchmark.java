@@ -12,6 +12,10 @@ public class Benchmark {
         Path out = Path.of(args.length > 0 ? args[0] : "results");
         Files.createDirectories(out);
 
+        new DpExperiment().run();
+        new MatchingExperiment().run();
+        new KasaiExperiment().run();
+
         List<String[]> dp = new DpExperiment().run();
         List<String[]> matching = new MatchingExperiment().run();
         List<String[]> kasai = new KasaiExperiment().run();
