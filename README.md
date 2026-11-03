@@ -65,3 +65,30 @@ Why it works: in an optimal sequence of edits the last position is handled in ex
 **Rabin-Karp.** Polynomial hash with base 256 and modulus 1 000 000 007. The window hash is updated in O(1) when sliding (remove the first char, multiply, add the new char). When the hash equals the pattern hash, the window is checked char by char, so a collision (same hash, different string) is just counted and skipped and never reported as a match. The test with modulus 7 forces many collisions and still gets the right answer.
 
 **Kasai.** Given `s` and its suffix array `sa`, builds `lcp[i]` = length of the longest common prefix of suffixes `sa[i-1]` and `sa[i]` (`lcp[0] = 0`). It goes through suffixes in text order and uses the fact that if suffix `i` has LCP `h` with its neighbour, suffix `i+1` has LCP at least `h-1` with its own neighbour. So `h` only drops by one per step. The LCP array is useful for things like counting distinct substrings, longest repeated substring, etc.
+
+## 2. Implementation decisions and assumptions
+
+- All algorithms are written by hand, no `indexOf` / regex / library helpers.
+- DP uses a full `(n+1) x (m+1)` table so the LCS can be reconstructed. Two rows would be enough for just the length.
+- Matchers implement one `Matcher` interface and return a `List<Integer>` of all start positions (overlapping matches included).
+- **Empty pattern returns an empty list.** I treat it as "nothing to search for". Pattern longer than text also returns an empty list.
+- Comparisons are counted as character comparisons `text[x] vs pattern[y]`. For KMP the prefix table comparisons are included. For Rabin-Karp only the verification comparisons are counted, hash arithmetic is not.
+- Suffix array is built with a simple comparison sort (`SuffixArray.build`), O(n² log n) worst case. It is only used to prepare input and is not timed.
+- Strings are Java `String`s, characters are compared as `char`.
+
+## 3. Complexity
+
+n, m are the lengths of the two strings (or text and pattern).
+
+| Algorithm | Main operation / recurrence | Best time | Worst time | Aux. space | Why |
+|---|---|---|---|---|---|
+| LCS | `dp[i][j]` from `dp[i-1][j-1]`, `dp[i-1][j]`, `dp[i][j-1]` | Θ(nm) | Θ(nm) | Θ(nm) | every cell is filled once in O(1), no early exit |
+| Edit Distance | min of substitute / delete / insert | Θ(nm) | Θ(nm) | Θ(nm) | same table shape, O(1) per cell |
+| Naive | compare pattern at every shift | O(n) | O(nm) | O(1) | best: first char mismatches at each shift; worst: almost full match each time (`aaa..a` / `aa..ab`) |
+| KMP | prefix table + one pass over text | O(m) pre + O(n) | O(m) pre + O(n) | O(m) | `i` never goes back, each fallback `j = lps[j-1]` is paid by an earlier increment of `j`, so at most 2n comparisons |
+| Rabin-Karp | rolling hash, verify on equal hash | O(m) pre + O(n + m) | O(nm) | O(1) | expected O(n+m) with a good modulus; worst case if every window collides or matches and needs O(m) verification |
+| Kasai | `h` carried from suffix `i` to `i+1`, minus 1 | Θ(n) | Θ(n) | Θ(n) | `h` grows at most n times in total and drops by at most 1 per step, so total comparisons ≤ 2n; `rank` and `lcp` arrays are O(n) |
+
+Rabin-Karp: the expected bound assumes hash values behave randomly, so a false match happens with probability about 1/q per window. The worst case is a bad modulus or a text with many real matches (e.g. `aaaa` and `aa`), where almost every window is verified.
+
+These are theoretical bounds. Measured times below also depend on JIT, cache and memory allocation, so they don't map 1:1 to the formulas.
